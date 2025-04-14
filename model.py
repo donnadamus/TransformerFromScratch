@@ -72,14 +72,23 @@ class PositionalEncoding(nn.Module):
         return x
 
 
+class LayerNormalization(nn.Module):
+    def __init__(self, d_model, eps=1e-6):
+        super().__init__()
 
+        # eps is used to avoid 0 at the denominator (look for LayerNorm formula online)
+        self.eps = eps
 
+        # Normalizes activations for stable training, but keeps flexibility through learnable scale and shift.
+        # Define alpha and bias learnable parameters
+        self.alpha = nn.Parameter(torch.ones(d_model))
+        self.bias = nn.Parameter(torch.zeros(d_model))
 
+    def forward(self, x):
+        mean = x.mean(dim=-1, keepdim=True) # take average on last dimension (d_model)
+        std = x.std(dim=-1, keepdim=True) # compute std on last dimension (d_model)
 
-
-
-
-
+        return self.alpha * (x - mean) / (std + self.eps) + self.bias
 
 
 
