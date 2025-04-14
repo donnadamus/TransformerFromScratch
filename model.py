@@ -90,5 +90,16 @@ class LayerNormalization(nn.Module):
 
         return self.alpha * (x - mean) / (std + self.eps) + self.bias
 
+class FeedForward(nn.Module):
+    def __init__(self, d_model, d_ff, dropout):
+        super().__init__()
+        self.W1 = nn.Linear(d_model, d_ff) # This already has b1 as well, bias=True
+        self.W2 = nn.Linear(d_ff, d_model) # This already has b2 as well, bias=True
+        self.dropout = nn.Dropout(dropout)
 
-
+    def forward(self, x):
+        x = self.W1(x)
+        x = nn.functional.relu(x)
+        x = self.W2(x)
+        x = self.dropout(x)
+        return x
