@@ -133,6 +133,15 @@ class MultiHeadAttention(nn.Module):
 
         # query, key, value have shapes (batch, h, seq_len, d_k)
 
+        # in the next operation, the shapes are:
+        # query (batch, h, seq_len, d_k)
+        # key (batch, h, d_k, seq_len)
+
+        # For each token in the sequence, we compute its dot product with all key vectors
+        # (including itself) using query @ key.transpose(-2, -1), giving us attention scores.
+        # This results in a (batch, heads, seq_len, seq_len) tensor where each token has
+        # similarity scores with every other token in the sequence.
+
         attention_scores = (query @ key.transpose(-2, -1)) / math.sqrt(d_k) # shape (batch, h, seq_len, seq_len)
 
         # now we apply the mask
