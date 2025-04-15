@@ -200,3 +200,33 @@ class ResidualConnection(nn.Module):
         # but in many implementations it is as following
 
         return x + self.dropout(sublayer(self.norm(x)))
+
+class EncoderBlock(nn.Module):
+    def __init__(self, d_model, d_ff, h, dropout):
+        super().__init__()
+        self.mha = MultiHeadAttention(d_model, h, dropout)
+        self.ffn = FeedForward(d_model, d_ff, dropout)
+        self.residual_one = ResidualConnection(d_model, dropout)
+        self.residual_two = ResidualConnection(d_model, dropout)
+
+    def forward(self, x, src_mask):
+        # Important: in the next call we can clearly see why it's called self-attention.
+        # the attention is in fact computed among the input itself.
+
+        x = self.residual_one(x, lambda x: self.mha(x, x, x, dropout=self.dropout, mask=src_mask))
+        x = self.residual_two(x, self.ffn)
+        return x
+
+class Encoder(nn.Module):
+    def __init__(self, d_model, layers):
+        super().__init__()
+        self.layers = layers
+
+        # why this LayerNorm here? It seems like to not be present in the diagrams of the original paper
+        self.norm = LayerNormalization(d_model)
+
+    def forward(self, x, src_mask):
+        for layer in self.layers:
+            x = layer(x, src_mask)
+
+        return self.norm(x)
