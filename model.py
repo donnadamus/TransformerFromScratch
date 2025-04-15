@@ -1,9 +1,7 @@
 import torch
 import torch.nn as nn
+import torch.nn.functional as F
 import math
-
-from django.db.models import F
-
 
 # Look to the notes on the paper when something is not clear
 
@@ -181,5 +179,15 @@ class MultiHeadAttention(nn.Module):
         # (batch, seq_len, d_model) --> (batch, seq_len, d_model)
         return self.w_o(x)
 
+class ResidualConnection(nn.Module):
 
+    def __init__(self, features: int, dropout: float) -> None:
+        super().__init__()
+        self.dropout = nn.Dropout(dropout)
+        self.norm = LayerNormalization(features)
 
+    def forward(self, x, sublayer):
+        # in the original paper the order of sublayer and norm seems to be swapped,
+        # but in many implementations it is as following
+
+        return x + self.dropout(sublayer(self.norm(x)))
